@@ -25,20 +25,26 @@ def schema_output_format_align(info_fields, completion):
     Key_value_set = set()
     result = defaultdict(defaultdict)
 
+    log_detail = [0] * 10
     for entity_type, second_dict in first_json.items():
         if type(entity_type)!=str or type(second_dict) != dict:
+            log_detail[0] += 1
             continue
         if entity_type not in schema_keyset:
+            log_detail[1] += 1
             continue
         
         for entity, third_dict in second_dict.items():
             if type(entity)!= str or type(third_dict) != dict:
+                log_detail[2] += 1
                 continue
             if entity not in input:
+                log_detail[3] += 1
                 continue
             inner_dict = {}
             for attri, value in third_dict.items():
                 if attri not in schema_keyset:
+                    log_detail[4] += 1
                     continue
                 if type(value) == list:
                     value = [art_works_clean(item) for item in value]
@@ -48,10 +54,13 @@ def schema_output_format_align(info_fields, completion):
                 elif type(value) == str:
                     if value not in input:
                         third_dict[attri] = "无"
+                        log_detail[5] += 1
                     value = art_works_clean(value)
                     inner_dict[attri] = value
             result[entity_type][entity] = inner_dict
-
+    if sum(log_detail) > 0:
+        pprint.pprint(first_json)
+        pprint.pprint(result)
     # if first_json != result:
     #     pprint.pprint(first_json)
     #     pprint.pprint(result)
@@ -75,7 +84,6 @@ def delete_unrelated(completion):
     if len(res) > 0:
         completion = res[0].strip()
     completion = completion.strip().replace("\n", "")
-    # completion = completion.replace("《","").replace("》","")
     # if old != completion:
     #     print(f"{old}\n{completion}")
     return completion
@@ -119,24 +127,22 @@ def llm_repair_jsonformat(questions):
 def qwen2_7B_offline_api(questions):
     prompts = [create_uie_prompt_construct(info) for info in questions]
     # 的确可以batch size 操作
-    sampling_params = SamplingParams(temperature=0.1, 
+    sampling_params = SamplingParams(temperature=0, 
                                      top_p=0.95, 
                                      max_tokens = 512, 
-                                     presence_penalty=0.0,
+                                     presence_penalty=0.1,
                                      frequency_penalty=0.1,
                                      repetition_penalty=0.9,
                                      stop=["}}}"],
                                      include_stop_str_in_output=True
                                      )
-    # 这几个参数还是很难调和的比较好
-    # print(questions)
     outputs = llm.generate(prompts, sampling_params)
     
     result = []
     for output in outputs:
-        prompt = output.prompt
-        generated_text = output.outputs[0].text
-        result.append(generated_text)
+        #output.finished
+        completion_1 = output.outputs[0].text.strip()
+        result.append(completion_1)
     return result
 
 def vllm_UniversalNER_7B(question):
@@ -148,8 +154,8 @@ def vllm_UniversalNER_7B(question):
             # {"role": "system", "content": "你是一名知识图谱，信息抽取专家，负责解答用户的抽取任务"},
             {"role": "user", "content": "hello world"},
         ],
-        max_tokens=1024
-        # response_format={"type": "json_object"},    # 配置了一些参数后，throughout明显变慢 7.8 token/s
+        max_tokens=1024,
+        response_format={"type": "json_object"},    # 配置了一些参数后，throughout明显变慢 7.8 token/s
     )
     content = chat_response.choices[0].message.content
     print(type(content))
@@ -165,7 +171,6 @@ def task_pipe():
     total_time = time.time() - start_time
     mean_time = total_time * 1000 / len(data)
     print(f"total time:{total_time}s\nmean request:{mean_time}ms")
-
     completion = post_process(data, completion)
 
 if __name__ == '__main__':

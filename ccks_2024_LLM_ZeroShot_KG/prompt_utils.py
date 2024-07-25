@@ -37,7 +37,7 @@ def create_uie_prompt_construct(info_fields):
     demo = f"这里有个例子:\nschema:{demo_fields['schema']}\ninput:{demo_fields['input']}\noutput:{demo_fields['output']}"
 
     schema = json.dumps(info_fields[2], ensure_ascii=False)
-    prompt = f"{pre_instruction}\{demo}\nQuestion:\nschema:{schema}\nInput:{info_fields[3]}\noutput(只输出JSON):"
+    prompt = f"{pre_instruction}\{demo}\n\nschema:{schema}\nInput:{info_fields[3]}\noutput(只输出JSON):"
     return prompt
 
 
