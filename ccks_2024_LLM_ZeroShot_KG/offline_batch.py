@@ -6,36 +6,51 @@ from prompt_utils import create_repair_json_prompt, create_uie_prompt_construct
 import pprint
 import re
 
+llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,
+              trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192)
 
 def format_align(info_fields, completions):
     result = []
 
-    second_recall_list = {}
+    second_recall_list = []
     for idx, completion in enumerate(completions):
+        completion = completion.replace("《","").replace("》","")
         try:
             first_json = json.loads(completion)
             #后验去重
             for entity_type, second_dict in first_json.items():
                 key_set = set()
                 value_set = set()
-                for entity, third_dict in second_dict.items():
-                    for attri, value in third_dict.items():
-                        if attri in key_set:
-                            continue
-                        else:
-                            key_set.add(attri)
-                            if type(value) == list:
-                                value = list(set(value))
+                if type(second_dict) == list:
+                    second_dict = list(set(second_dict))
+                elif type(second_dict) == dict:
+                    for entity, third_dict in second_dict.items():
+                        for attri, value in third_dict.items():
+                            if attri in key_set:
+                                continue
+                            else:
+                                key_set.add(attri)
+                                if type(value) == list:
+                                    value = list(set(value))
+                                elif type(value) == str:
+                                    if '不详' in value or '未提及' in value:
+                                        third_dict[attri] = ""
             pprint.pprint(first_json)
         except Exception as e:
             # print(f"Prompt: {prompt!r}, \nGenerated text: {generated_text!r}")
             print(e)
             print(f"ERROR:{completion}")
+            second_recall_list.append((completion, idx))
             completion = "{}"
-            second_recall_list[idx] = completion
         result.append(completion)
 
-    llm_repair_jsonformat(second_recall_list)
+    # print("\n---------\nJSON 修复------------\n")
+    # repair_complication = llm_repair_jsonformat(second_recall_list)
+    # for idx, value in repair_complication.items():
+    #     old = result[idx]
+    #     result[idx] = value
+    #     print(f"二次修复:\n{old}\n{value}")
+
     return result
 
 def delete_unrelated(completions):
@@ -71,7 +86,7 @@ def post_process(data, completion):
 
 
 def llm_repair_jsonformat(questions):
-    prompts = [create_uie_prompt_construct(info) for info in questions]
+    prompts = [create_repair_json_prompt(info[0]) for info in questions]
     # 的确可以batch size 操作
     sampling_params = SamplingParams(temperature=0.1, 
                                      top_p=0.95, 
@@ -83,16 +98,15 @@ def llm_repair_jsonformat(questions):
                                      include_stop_str_in_output=True
                                      )
     # 这几个参数还是很难调和的比较好
-    llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,
-              trust_remote_code=True,revision="v1.1.8",)
     # print(questions)
     outputs = llm.generate(prompts, sampling_params)
     
-    result = []
+    result = {}
+    idx = -1
     for output in outputs:
-        prompt = output.prompt
         generated_text = output.outputs[0].text
-        result.append(generated_text)
+        idx += 1
+        result[idx] = generated_text
     return result
 
 def qwen2_7B_offline_api(questions):
@@ -101,15 +115,13 @@ def qwen2_7B_offline_api(questions):
     sampling_params = SamplingParams(temperature=0.1, 
                                      top_p=0.95, 
                                      max_tokens = 512, 
-                                     presence_penalty=-0.3,
+                                     presence_penalty=0.0,
                                      frequency_penalty=0.1,
                                      repetition_penalty=0.9,
                                      stop=["}}}"],
                                      include_stop_str_in_output=True
                                      )
     # 这几个参数还是很难调和的比较好
-    llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,
-              trust_remote_code=True,revision="v1.1.8",)
     # print(questions)
     outputs = llm.generate(prompts, sampling_params)
     

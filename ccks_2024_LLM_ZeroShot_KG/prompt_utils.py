@@ -4,7 +4,7 @@ pre_instruction = """你是知识图谱、实体抽取、知识结构化专家�
 json格式:
 {entity type:
     {entity:
-        {attribute key:attribute value（attribute value为空不输出;数值转为string类型;True/False转换为是或否;注意key,value都要去重）}
+        {attribute key:attribute value（attribute未提及不输出;数值转为string类型;True/False转换为是或否;注意key,value都要去重）}
     }
 }
 1.输出JSON对象，不要多余的信息,JSON中所有字段都要去重
@@ -22,7 +22,6 @@ def create_uie_prompt_construct(info_fields):
     return prompt
 
 
-
 def create_repair_json_prompt(question):
-    prompt = f"我知道这个字符串，其实是一个JSON对象，但是格式不良好，帮我完善一下格式：{question}"
+    prompt = f"有段文本，帮我转为JSON对象。可能存在符号问题（比如括号不匹配，分隔符包含中文逗号，中文冒号）\n{question}"
     return prompt
