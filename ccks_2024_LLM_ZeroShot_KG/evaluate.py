@@ -167,7 +167,7 @@ def convert_kg(outputs):
     return kgs
 
 if __name__=="__main__":
-    submit_path = "/Users/buring/study/competition/CCKS2024——大模型零样本知识抽取评测/submit.json"
+    submit_path = "/root/trajectory/ccks_2024_LLM_ZeroShot_KG/data/qwen2-7B-instruct-final.json"
     with open(submit_path, 'r',encoding='utf-8') as reader:
         for line in reader:
             # ori 解析，看是否能够通过

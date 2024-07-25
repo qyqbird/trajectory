@@ -29,10 +29,15 @@ input: 叶乔波，女，1964年6月3日出生于吉林省长春市  。中国�
 output: "{\"运动员\": {\"叶乔波\": {\"运动项目\": \"速滑\", \"主要奖项\": [\"500米短道速滑世界冠军\", \"第十六届冬奥会两枚银牌\", \"女子1000米速滑冠军\", \"女子全能世界冠军\", \"全部女子50 >米速滑金牌\", \"第17届冬奥会女子1000米速滑铜牌\"],  \"出生地\": \"吉林省长春市\", \"死亡日期\":[]}}}\n\n
 """
 
-def create_uie_prompt_construct(info_fields, source="default"):
-    EXAMPLE = PROMPT_EXAMPLES[source][0]
+def create_uie_prompt_construct(info_fields):
+    source = info_fields[4]
+    if source not in PROMPT_EXAMPLES:
+        source = "default"
+    demo_fields = PROMPT_EXAMPLES[source]
+    demo = f"这里有个例子:\nschema:{demo_fields['schema']}\ninput:{demo_fields['input']}\noutput:{demo_fields['output']}"
+
     schema = json.dumps(info_fields[2], ensure_ascii=False)
-    prompt = f"{pre_instruction}\nExample1:{EXAMPLE}\nQuestion:\nschema:{schema}\nInput:{info_fields[3]}\noutput(只输出JSON):"
+    prompt = f"{pre_instruction}\{demo}\nQuestion:\nschema:{schema}\nInput:{info_fields[3]}\noutput(只输出JSON):"
     return prompt
 
 
