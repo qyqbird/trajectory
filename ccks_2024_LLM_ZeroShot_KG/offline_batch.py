@@ -41,6 +41,8 @@ def schema_output_format_align(info_fields, completion):
             if entity not in input:
                 log_detail[3] += 1
                 continue
+
+            entity = art_works_clean(entity)
             inner_dict = {}
             for attri, value in third_dict.items():
                 if attri not in schema_keyset:
@@ -60,7 +62,7 @@ def schema_output_format_align(info_fields, completion):
             result[entity_type][entity] = inner_dict
     if sum(log_detail) > 0:
         pprint.pprint(first_json)
-        pprint.pprint(result)
+        pprint.pprint(dict(result))
     # if first_json != result:
     #     pprint.pprint(first_json)
     #     pprint.pprint(result)

@@ -7,5 +7,6 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 2. output 与schema 完全对齐，删除无关输出,JSON异常只有3 56->59
 
 TODO
+1. 有几个品类的作品也需要进行整理《》；层级不一样
+分别测试一下效果
 1. 个性化source example
-    a. 比如区域：云南省xx区，要分开吗，那个case
