@@ -1,15 +1,16 @@
 # Qwen2-7B
     BF16:15G
     Instruct-AWQ:5.2G
-BF16:15G: 18s  没控制好，结尾总是生成乱七八糟的东西。应该是指令跟随不行，不能用raw版本。
+BF16:15G: 18s  没控制好，结尾总是生成乱七八糟的东西。应该是指令跟随不行，也有参数设置的原因,不能用raw版本。
 
 # Qwen2-7B-Instruct-AWQ 
 有指令跟随能力
 1. AutoModelForCausalLM.from_pretrained 直接加载,显存在上面基础上+2G。
-Instruct-AWQ:5.2G 推理： 42s/question
+Instruct-AWQ:5.2G 推理： batch 推理; 1024条样本,平均120ms,总共2分多钟
 
 2. 但是用vllm加载，有多少内存都不够用 OOM。3090、V100（且不支持BF16）  需要设置max_len_seq
 ```python -m vllm.entrypoints.openai.api_server --model Qwen2-7B-Instruct-AWQ --max-model-len 8096```
+直接离线代码加载,没有这个问题
 
 
 
