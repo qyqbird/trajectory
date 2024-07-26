@@ -6,7 +6,7 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 1. 作品不能带书名号,F1 50->57
 2. output 与schema 完全对齐，删除无关输出,JSON异常只有3 56->59
 
-TODO
-1. 有几个品类的作品也需要进行整理《》；层级不一样
-分别测试一下效果
-1. 个性化source example
+3. 有几个品类的作品也需要进行整理《》；二层字典的key。 59->61.4
+4. 个性化source example： 61.4->60; 应该是有些prompt不适合,或者更简单了,
+    法律：有很多模糊地方（比如实施日期，颁发日期），不知道如何抽取
+
