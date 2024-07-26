@@ -63,5 +63,23 @@ def vllm_code_test():
     print(f"{torch.cuda.max_memory_allocated(0)//1e6}MB")
     print(f"mean time:{consume}")
 
+
+def vllm_UniversalNER_7B_online(question):
+    # python -m vllm.entrypoints.openai.api_server --model /root/autodl-tmp/UniNER-7B-all --max-model-len 2048
+    chat_response = OpenAI_client.chat.completions.create(
+        model="/root/autodl-tmp/UniNER-7B-all",
+        messages=[
+            {"role": "assistant", "content": "You are a helpful assistant."},
+            # {"role": "system", "content": "你是一名知识图谱，信息抽取专家，负责解答用户的抽取任务"},
+            {"role": "user", "content": "hello world"},
+        ],
+        max_tokens=1024,
+        response_format={"type": "json_object"},    # 配置了一些参数后，throughout明显变慢 7.8 token/s
+    )
+    content = chat_response.choices[0].message.content
+    print(type(content))
+    print(content)
+    return content
+
 if __name__ == '__main__':
     awq_test()

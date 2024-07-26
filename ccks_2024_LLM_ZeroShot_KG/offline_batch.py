@@ -7,16 +7,16 @@ import pprint
 import re
 from collections import defaultdict
 
-llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,
-              trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192)
 
+# DeepSeek 秘钥:  sk-ebacd6b1c46f4d7d9659931de3b33ee3
 def schema_output_format_align(info_fields, completion):
     #1. 保证JSON格式 
     try:
         first_json = json.loads(completion)
+        print(first_json)
     except json.decoder.JSONDecodeError:
         #TODO 计划生成2个，然后取第二个 18/1000; 或者2次召回
-        # print(f"JSON ERROR:\n{completion}")
+        print(f"JSON ERROR:\n{completion}")
         first_json = {}
 
     # 2. 保证JSON key在schema中  3. 保证value在input中 4. key, value去重
@@ -101,31 +101,6 @@ def post_process(data, completions):
         fo.write(json.dumps(input[-1], ensure_ascii=False) + "\n")
     fo.close()
 
-
-def llm_repair_jsonformat(questions):
-    prompts = [create_repair_json_prompt(info[0]) for info in questions]
-    # 的确可以batch size 操作
-    sampling_params = SamplingParams(temperature=0.1, 
-                                     top_p=0.95, 
-                                     max_tokens = 512, 
-                                     presence_penalty=-0.3,
-                                     frequency_penalty=0.1,
-                                     repetition_penalty=0.9,
-                                     stop=["}}}"],
-                                     include_stop_str_in_output=True
-                                     )
-    # 这几个参数还是很难调和的比较好
-    # print(questions)
-    outputs = llm.generate(prompts, sampling_params)
-    
-    result = {}
-    idx = -1
-    for output in outputs:
-        generated_text = output.outputs[0].text
-        idx += 1
-        result[idx] = generated_text
-    return result
-
 def qwen2_7B_offline_api(questions):
     prompts = [create_uie_prompt_construct(info) for info in questions]
     # 的确可以batch size 操作
@@ -138,6 +113,8 @@ def qwen2_7B_offline_api(questions):
                                      stop=["}}}"],
                                      include_stop_str_in_output=True
                                      )
+    llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,
+              trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192)
     outputs = llm.generate(prompts, sampling_params)
     
     result = []
@@ -147,29 +124,36 @@ def qwen2_7B_offline_api(questions):
         result.append(completion_1)
     return result
 
-def vllm_UniversalNER_7B(question):
-    # python -m vllm.entrypoints.openai.api_server --model /root/autodl-tmp/UniNER-7B-all --max-model-len 2048
-    chat_response = OpenAI_client.chat.completions.create(
-        model="/root/autodl-tmp/UniNER-7B-all",
-        messages=[
-            {"role": "assistant", "content": "You are a helpful assistant."},
-            # {"role": "system", "content": "你是一名知识图谱，信息抽取专家，负责解答用户的抽取任务"},
-            {"role": "user", "content": "hello world"},
-        ],
-        max_tokens=1024,
-        response_format={"type": "json_object"},    # 配置了一些参数后，throughout明显变慢 7.8 token/s
-    )
-    content = chat_response.choices[0].message.content
-    print(type(content))
-    print(content)
-    return content
+def UniversalNER_7B_offline_api(questions):
+    #27G
+    prompts = [create_uie_prompt_construct(info) for info in questions]
+    sampling_params = SamplingParams(temperature=0, 
+                                     top_p=0.95, 
+                                     max_tokens = 512, 
+                                     presence_penalty=0.1,
+                                     frequency_penalty=0.1,
+                                     repetition_penalty=0.9,
+                                     stop_token_ids=["}}}"],
+                                     )
+    # include_stop_str_in_output=True 没生效，结果没包含 }}}
+    llm = LLM(model="/root/autodl-tmp/UniNER-7B-all", enforce_eager=True,
+              trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192)
+    outputs = llm.generate(prompts, sampling_params)
+    
+    result = []
+    for output in outputs:
+        #output.finished
+        completion_1 = output.outputs[0].text.strip()
+        result.append(completion_1)
+    return result
 
 
 def task_pipe():
     data = data_parser()
 
     start_time = time.time()
-    completion = qwen2_7B_offline_api(data)
+    # completion = qwen2_7B_offline_api(data)
+    completion = UniversalNER_7B_offline_api(data)
     total_time = time.time() - start_time
     mean_time = total_time * 1000 / len(data)
     print(f"total time:{total_time}s\nmean request:{mean_time}ms")
