@@ -22,9 +22,10 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 先delay
 
 # Qwen2-72B-awq
-1. 慢慢下载; 分片段 GIT_LFS_SKIP_SMUDGE=1 git clone https://www.modelscope.cn/qwen/Qwen2-72B-Instruct-AWQ.git
-2. git lfs fetch --include=model-00004-of-00011.safetensors
-3. 直接git clone : 一直不成功,被killed
+1. 慢慢下载; 分片段 GIT_LFS_SKIP_SMUDGE=1 git clone https://www.modelscope.cn/qwen/Qwen2-72B-Instruct-AWQ.git  直接git clone : 一直不成功,被killed
+2. git lfs pull --include=model-00004-of-00011.safetensors
+
+同样的代码:显卡OOM
 
 # OneKE探索
 

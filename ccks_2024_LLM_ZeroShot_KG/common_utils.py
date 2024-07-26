@@ -12,8 +12,8 @@ OpenAI_client = OpenAI(
 
 def data_parser(filename=None):
     data_container = []
-    # for line in open('data/ccks2024复赛.json'):
-    for line in open('data/test'):
+    for line in open('data/ccks2024复赛.json'):
+    # for line in open('data/test'):
         input_dict = json.loads(line.strip())
         ID = input_dict['id']
         source = "default"

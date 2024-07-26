@@ -13,7 +13,7 @@ questions = ["Give me a short introduction to large language model.",
         "帮我写一个李商隐的诗"
         ]
 
-AWQ_MODEL = "/root/autodl-tmp/Qwen2-7B-Instruct-AWQ/"
+AWQ_MODEL = "/root/autodl-tmp/Qwen2-72B-Instruct-AWQ/"
 BF16_MODEL = "/root/autodl-tmp/Qwen2-7B/"
 
 def get_model(name):
@@ -73,8 +73,8 @@ def test_BF16():
 
 
 def time_experiment(prefix=False):
-    # model, tokenizer = get_model(AWQ_MODEL)
-    model, tokenizer = get_model(BF16_MODEL)
+    model, tokenizer = get_model(AWQ_MODEL)
+    # model, tokenizer = get_model(BF16_MODEL)
     start_time = time.time()
     if not prefix:
         model_inputs = tokenizer(questions, padding=True, return_tensors="pt").to(device)
@@ -93,7 +93,7 @@ def time_experiment(prefix=False):
     else:
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": "失业了怎么办"}
         ]
         text = tokenizer.apply_chat_template(
             messages,
@@ -106,5 +106,5 @@ def time_experiment(prefix=False):
     print(f"{torch.cuda.max_memory_allocated(device)//1e6}MB")
     print(f"{consume} s")
 
-# time_experiment()
+time_experiment()
 # test_BF16()

@@ -2,7 +2,7 @@ import json
 import time
 from vllm import LLM, SamplingParams
 from common_utils import OpenAI_client, data_parser, art_works_clean, get_schema_keyset
-from prompt_utils import create_repair_json_prompt, create_uie_prompt_construct
+from prompt_utils import create_uie_prompt_construct
 import pprint
 import re
 from collections import defaultdict
@@ -95,7 +95,7 @@ def post_process(data, completions):
     completions = [delete_unrelated(completion) for completion in completions]
     completions = [schema_output_format_align(data[idx], completion) for idx, completion in enumerate(completions)]
 
-    fo = open('data/qwen2-7B-instruct-final.json', 'w')
+    fo = open('data/qwen2-72B-instruct-final.json', 'w')
     for input, res in zip(data, completions):
         input[-1]["output"] = res
         fo.write(json.dumps(input[-1], ensure_ascii=False) + "\n")
@@ -115,6 +115,34 @@ def qwen2_7B_offline_api(questions):
                                      )
     llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,
               trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192)
+    # 没有生效：max_seq_len_to_capture
+    outputs = llm.generate(prompts, sampling_params)
+    
+    result = []
+    for output in outputs:
+        #output.finished
+        completion_1 = output.outputs[0].text.strip()
+        result.append(completion_1)
+    return result
+
+def qwen2_72B_offline_api(questions):
+    prompts = [create_uie_prompt_construct(info) for info in questions]
+    # python -m vllm.entrypoints.openai.api_server --model /root/autodl-tmp/Qwen2-72B-Instruct-AWQ --max-model-len 1024  成功启动
+    #L20 48G显卡， OOM。原因是：max_seq_len=32768,  设置的参数失效。解决方案：直接去config.json 修改
+    sampling_params = SamplingParams(temperature=0, 
+                                     top_p=0.95, 
+                                     max_tokens = 512, 
+                                     presence_penalty=0.1,
+                                     frequency_penalty=0.1,
+                                     repetition_penalty=0.9,
+                                     stop=["}}}"],
+                                     include_stop_str_in_output=True
+                                     )
+    # 在Qwen源头进行修改max_pos
+    llm = LLM(model="/root/autodl-tmp/Qwen2-72B-Instruct-AWQ",enforce_eager=True,
+              max_seq_len_to_capture=4096,gpu_memory_utilization=0.95)
+    # max_seq_len_to_capture=4096 不影响最初模型加载
+    # gpu_memory_utilization 也不影响
     outputs = llm.generate(prompts, sampling_params)
     
     result = []
@@ -153,7 +181,7 @@ def task_pipe():
 
     start_time = time.time()
     # completion = qwen2_7B_offline_api(data)
-    completion = UniversalNER_7B_offline_api(data)
+    completion = qwen2_72B_offline_api(data)
     total_time = time.time() - start_time
     mean_time = total_time * 1000 / len(data)
     print(f"total time:{total_time}s\nmean request:{mean_time}ms")
