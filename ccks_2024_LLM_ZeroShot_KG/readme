@@ -34,3 +34,11 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 	 多个大模型结果进行比对,一致可以做为标准
 	以初赛数据作为参考
 2. 仔细查看数据:shcema 似乎有不合理的地方,与input不配对,这种情况问题很大
+
+# 数据集
+## IEPile
+NER,RE,EE类型; 尤其是RE,三元组对语义理解有一定帮助,但是又和比赛有一定差异性
+InstructIE: 是可以转换成本次比赛的格式的数据; 官方说有一定的噪音,那么就需要对数据进行提纯
+
+TODO
+1. 观察InstructIE ,产生微调数据集

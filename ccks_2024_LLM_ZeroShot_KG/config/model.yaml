@@ -1,0 +1,10 @@
+qwen2-7b-awq:
+  model_path: /root/Qwen2-7B-Instruct-AWQ
+  user_lora: True
+  lora_path: ss
+
+
+qwen2-72b-awq:
+  model_path: /root/autodl-tmp/Qwen2-72B-Instruct-AWQ
+  user_lora: False
+  lora_path: ss
