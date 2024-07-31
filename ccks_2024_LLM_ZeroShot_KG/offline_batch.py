@@ -8,15 +8,12 @@ import pprint
 import re
 from collections import defaultdict
 
-
 # DeepSeek 秘钥:  sk-ebacd6b1c46f4d7d9659931de3b33ee3
 def schema_output_format_align(info_fields, completion):
-    #1. 保证JSON格式 
     try:
         first_json = json.loads(completion)
         print(first_json)
     except json.decoder.JSONDecodeError:
-        #TODO 计划生成2个，然后取第二个 18/1000; 或者2次召回
         print(f"JSON ERROR:\n{completion}")
         first_json = {}
 
@@ -24,7 +21,7 @@ def schema_output_format_align(info_fields, completion):
     input = info_fields[3]
     schema_keyset = get_schema_keyset(info_fields[2])
     Key_value_set = set()
-    result = defaultdict(defaultdict)
+    result = defaultdict(dict)
 
     log_detail = [0] * 10
     for entity_type, second_dict in first_json.items():
@@ -39,7 +36,7 @@ def schema_output_format_align(info_fields, completion):
             if type(entity)!= str or type(third_dict) != dict:
                 log_detail[2] += 1
                 continue
-            if entity not in input:
+            if entity in ["未提及",''] or entity not in input:
                 log_detail[3] += 1
                 continue
 
@@ -55,11 +52,13 @@ def schema_output_format_align(info_fields, completion):
                     value = list(set(value))
                     inner_dict[attri] = value
                 elif type(value) == str:
-                    if value not in input:
-                        third_dict[attri] = "无"
+                    if value in ["未提及",''] or value not in input:
+                        value = "无"
                         log_detail[5] += 1
                     value = art_works_clean(value)
                     inner_dict[attri] = value
+                    third_dict[attri] = value
+
             result[entity_type][entity] = inner_dict
     if sum(log_detail) > 0:
         pprint.pprint(first_json)
@@ -140,7 +139,7 @@ def qwen2_7B_offline_lora_api(questions, ner_lora_path):
                                      include_stop_str_in_output=True
                                      )
     llm = LLM(model="/root/Qwen2-7B-Instruct-AWQ", enforce_eager=True,enable_lora=True,
-              trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192,max_lora_rank=64)
+              trust_remote_code=True,revision="v1.1.8",max_seq_len_to_capture=8192,max_lora_rank=32)
     # 没有生效：max_seq_len_to_capture, 同理max_lora_rank 没啥用
     outputs = llm.generate(prompts, sampling_params,lora_request=LoRARequest("ner_adapter", 1, ner_lora_path))
     
@@ -207,10 +206,10 @@ def task_pipe():
 
     start_time = time.time()
     # completion = qwen2_7B_offline_api(data)
-    # completion = qwen2_72B_offline_api(data)
-    model_name = "qwen2-7B-lora-awq"
-    lora_path = "/root/workspace/Qwen2/examples/sft/output_qwen"
-    completion = qwen2_7B_offline_lora_api(data, lora_path)
+    completion = qwen2_72B_offline_api(data)
+    # model_name = "qwen2-7B-lora-awq"
+    # lora_path = "/root/workspace/Qwen2/examples/sft/output_qwen"
+    # completion = qwen2_7B_offline_lora_api(data, lora_path)
     total_time = time.time() - start_time
     mean_time = total_time * 1000 / len(data)
     print(f"total time:{total_time}s\nmean request:{mean_time}ms")

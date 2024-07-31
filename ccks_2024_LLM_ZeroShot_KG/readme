@@ -26,13 +26,14 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 2. git lfs pull --include=model-00004-of-00011.safetensors
 
 同样的代码:显卡OOM
+61.4->65.3
+# badcase 分析
+1. 菜品中：辅材，主材，调味品区分度不够； 隐藏的制作工艺没有提取出来
 
 # OneKE探索
 
 # SFT
 1. 数据,以哪个作为基准呢?
-	 多个大模型结果进行比对,一致可以做为标准
-	以初赛数据作为参考
 2. 仔细查看数据:shcema 似乎有不合理的地方,与input不配对,这种情况问题很大
 
 # 数据集
@@ -41,4 +42,25 @@ NER,RE,EE类型; 尤其是RE,三元组对语义理解有一定帮助,但是又�
 InstructIE: 是可以转换成本次比赛的格式的数据; 官方说有一定的噪音,那么就需要对数据进行提纯
 
 TODO
-1. 观察InstructIE ,产生微调数据集
+1. 观察InstructIE ,产生微调数据集.调试了几轮，没有效果，反而下降
+
+
+# 思考
+比赛数据：很依赖entity, attribute的描述信息，比如：调味品，辅材，主材，烹饪方式等也与对应的description 有极大的关系
+对应的InstructIE 问题是：属性词缺乏描述信息，比较单吊，缺乏语义变化后的结果对比
+
+
+
+
+# CCKS复赛数据
+entities:131
+	'政治人物': 120,
+	'历史人物': 65,
+	'公司': 49,
+	'法律法规': 48,
+	'文化人物': 40,
+	'汽车': 41,
+	'运动员': 29,
+摸底头部entities主要问题
+1. 
+attributes:578
