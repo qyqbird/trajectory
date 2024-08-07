@@ -36,6 +36,8 @@ def schema_optimizer(schema):
             attributes[attri] = attri
         if descri == "外文名" and '非中文' not in descri:
             attributes[attri] = "非中文名称，" + descri
+        elif attri == "性别":
+            attributes[attri] = "人物的性别，如男、女。"
     return schema
 
 def create_uie_prompt_construct(info_fields):

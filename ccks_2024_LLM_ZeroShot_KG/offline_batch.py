@@ -2,104 +2,24 @@ import json
 import time
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
-from common_utils import OpenAI_client, data_parser, art_works_clean, get_schema_keyset
+from common_utils import OpenAI_client, data_parser, schema_output_format_align, delete_unrelated
 from prompt_utils import create_uie_prompt_construct
-import pprint
-import re
-from collections import defaultdict
 
-# DeepSeek 秘钥:  sk-ebacd6b1c46f4d7d9659931de3b33ee3
-def schema_output_format_align(info_fields, completion):
-    try:
-        first_json = json.loads(completion)
-        print(first_json)
-    except json.decoder.JSONDecodeError:
-        print(f"JSON ERROR:\n{completion}")
-        first_json = {}
-
-    # 2. 保证JSON key在schema中  3. 保证value在input中 4. key, value去重
-    input = info_fields[3]
-    schema_keyset = get_schema_keyset(info_fields[2])
-    Key_value_set = set()
-    result = defaultdict(dict)
-
-    log_detail = [0] * 10
-    for entity_type, second_dict in first_json.items():
-        if type(entity_type)!=str or type(second_dict) != dict:
-            log_detail[0] += 1
-            continue
-        if entity_type not in schema_keyset:
-            log_detail[1] += 1
-            continue
-        
-        for entity, third_dict in second_dict.items():
-            if type(entity)!= str or type(third_dict) != dict:
-                log_detail[2] += 1
-                continue
-            if entity in ["未提及",''] or entity not in input:
-                log_detail[3] += 1
-                continue
-
-            entity = art_works_clean(entity)
-            inner_dict = {}
-            for attri, value in third_dict.items():
-                if attri not in schema_keyset:
-                    log_detail[4] += 1
-                    continue
-                if type(value) == list:
-                    value = [art_works_clean(item) for item in value]
-                    value = list(filter(lambda x: x in input, value))
-                    value = list(set(value))
-                    inner_dict[attri] = value
-                elif type(value) == str:
-                    if value in ["未提及",''] or value not in input:
-                        value = "无"
-                        log_detail[5] += 1
-                    value = art_works_clean(value)
-                    inner_dict[attri] = value
-                    third_dict[attri] = value
-
-            result[entity_type][entity] = inner_dict
-    if sum(log_detail) > 0:
-        pprint.pprint(first_json)
-        pprint.pprint(dict(result))
-    # if first_json != result:
-    #     pprint.pprint(first_json)
-    #     pprint.pprint(result)
-
-    result = json.dumps(result, ensure_ascii=False)
-    return result
-
-def delete_unrelated(completion):
-    # print(completion)
-    #1. JSON + schema:xxx
-    old = completion
-    if 'schema:' in completion:
-        idx = completion.index('schema:')
-        completion = completion[:idx].strip()
-    if 'Question:' in completion:
-        completion = completion.replace('Question:', '')
-    #2. ```JSON``` 正则匹配
-    if type(completion) == list:
-        completion = completion[0]
-    res = re.findall(r'.*```json(.*)```.*', completion, re.DOTALL)
-    if len(res) > 0:
-        completion = res[0].strip()
-    completion = completion.strip().replace("\n", "")
-    # if old != completion:
-    #     print(f"{old}\n{completion}")
-    return completion
 
 def post_process(data, completions):
-    # print(completion)
+    with open('data/qwen2-72B-middle.json', 'w') as middle:
+        for input, res in zip(data, completions):
+            input[-1]["output"] = res
+            print(res)
+            middle.write(json.dumps(input[-1], ensure_ascii=False) + "\n")
+
     completions = [delete_unrelated(completion) for completion in completions]
     completions = [schema_output_format_align(data[idx], completion) for idx, completion in enumerate(completions)]
 
-    fo = open('data/qwen2-7B-instruct-lora-final.json', 'w')
-    for input, res in zip(data, completions):
-        input[-1]["output"] = res
-        fo.write(json.dumps(input[-1], ensure_ascii=False) + "\n")
-    fo.close()
+    with open('data/qwen2-72B-final.json', 'w') as fo:
+        for input, res in zip(data, completions):
+            input[-1]["output"] = res
+            fo.write(json.dumps(input[-1], ensure_ascii=False) + "\n")
 
 def qwen2_7B_offline_api(questions):
     prompts = [create_uie_prompt_construct(info) for info in questions]
@@ -203,9 +123,7 @@ def UniversalNER_7B_offline_api(questions):
 
 def task_pipe():
     data = data_parser()
-
     start_time = time.time()
-    # completion = qwen2_7B_offline_api(data)
     completion = qwen2_72B_offline_api(data)
     # model_name = "qwen2-7B-lora-awq"
     # lora_path = "/root/workspace/Qwen2/examples/sft/output_qwen"
