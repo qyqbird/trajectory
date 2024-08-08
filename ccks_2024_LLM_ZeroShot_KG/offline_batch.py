@@ -77,9 +77,9 @@ def qwen2_72B_offline_api(questions):
     sampling_params = SamplingParams(temperature=0, 
                                      top_p=0.95, 
                                      max_tokens = 512, 
-                                     presence_penalty=0.1,
-                                     frequency_penalty=0.1,
-                                     repetition_penalty=0.9,
+                                     presence_penalty=0.0,
+                                     frequency_penalty=0.0,
+                                     repetition_penalty=1.0,
                                      stop=["}}}"],
                                      include_stop_str_in_output=True
                                      )
@@ -122,7 +122,7 @@ def UniversalNER_7B_offline_api(questions):
 
 
 def task_pipe():
-    data = data_parser()
+    data = data_parser('data/ccks2024复赛.json')
     start_time = time.time()
     completion = qwen2_72B_offline_api(data)
     # model_name = "qwen2-7B-lora-awq"

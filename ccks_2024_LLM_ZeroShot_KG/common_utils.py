@@ -54,6 +54,8 @@ def get_schema_keyset(schema):
 
 def art_works_clean(completion):
     #1. 《作品》  2. 话剧《作品》
+    if type(completion) == float or type(completion) == int:
+        completion = str(completion)
     res = re.findall(r'.*《(.*)》.*', completion, re.DOTALL)
     if res:
         completion = res[0]
@@ -130,6 +132,7 @@ def schema_output_format_align(info_fields, completion):
 
             result[entity_type][entity] = inner_dict
     if len(log_detail) > 0:
+        input = input.replace("\n", "")
         pprint.pprint(f"log_detail:{input}\n{log_detail}")
         pprint.pprint(dict(result))
 
@@ -158,6 +161,7 @@ def delete_unrelated(completion):
     completion = completion.strip().replace("\n", "")
     # if old != completion:
     #     print(f"{old}\n{completion}")
+    #     print('\n--------------split----------------\n')
     return completion
 
 
@@ -167,6 +171,9 @@ def offline_post_process():
     completions = [middle[-1]['output'] for middle in middle_result]
 
     completions = [delete_unrelated(completion) for completion in completions]
+    for completion in completions:
+        if len(completion) > 300:
+            print(f"{len(completion)}\t{completion}")
     completions = [schema_output_format_align(data[idx], completion) for idx, completion in enumerate(completions)]
 
     with open('data/qwen2-72B-final.json', 'w') as fo:

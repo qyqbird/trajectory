@@ -16,7 +16,7 @@ pre_instruction = """你是知识图谱、实体抽取、知识结构化专家�
 json格式:
 {entity type:
     {entity:
-        {attribute key:attribute value（attribute未提及不输出;数值转为string类型;注意key,value都要去重）}
+        {attribute key:attribute value（attribute未提及不输出;数值转为文本类型;注意key,value都要去重）}
     }
 }
 1. 输出一个JSON对象，不要多余的信息,JSON中所有字段都要去重。
@@ -36,8 +36,8 @@ def schema_optimizer(schema):
             attributes[attri] = attri
         if descri == "外文名" and '非中文' not in descri:
             attributes[attri] = "非中文名称，" + descri
-        elif attri == "性别":
-            attributes[attri] = "人物的性别，如男、女。"
+        # elif attri == "性别":
+        #     attributes[attri] = "人物的性别，如男、女。"
     return schema
 
 def create_uie_prompt_construct(info_fields):
