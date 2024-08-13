@@ -125,7 +125,9 @@ def schema_output_format_align(info_fields, completion):
                         else:
                             log_detail.append(f"无法推理：{attri}: {value} --> 无")
                             value = "无"
-                            
+                    if value.endswith('。'):
+                        value = value[:-1]
+
                     value = art_works_clean(value)
                     inner_dict[attri] = value
                     third_dict[attri] = value
