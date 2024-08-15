@@ -91,6 +91,9 @@ def schema_output_format_align(info_fields, completion):
         if entity_type not in schema_keyset:
             log_detail.append(f"ERROR ENTITY_TYPE:{entity_type}")
             continue
+        if entity_type == "实体":
+            log_detail.append(f"ERROR 实体")
+            continue
         
         for entity, third_dict in second_dict.items():
             if type(entity)!= str or type(third_dict) != dict:
