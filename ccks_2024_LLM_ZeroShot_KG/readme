@@ -1,3 +1,12 @@
+复现
+pip install -r requirements.txt
+1. 下载Qwen2-72B-instruct-AWQ
+2. python offline_batch.py
+输入：data/ccks2024复赛.json
+输出：data/qwen2-72B-final.json
+
+
+
 # 调参文档
 https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 参数很重要

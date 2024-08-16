@@ -8,7 +8,7 @@ download_bigfile()
 	do
 		if [[ $file == *bin ]];then
 			echo $file
-			git lfs fetch --include="$file"
+			git lfs pull --include="$file"
 		fi
 	done
 }
