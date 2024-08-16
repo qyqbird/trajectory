@@ -6,10 +6,16 @@ pip install -r requirements.txt
 输出：data/qwen2-72B-final.json
 
 
+# 解题大致路径
+1. badcase 问题解析。 发现书名号，性别问题
+2. 头部entity, 属性， 希望能优化头部描述信息来提示结果
+3. 头部case，也就一条case超过10个是（实体，属性）二元组的， 看看什么问题解决
+4. 调参
+5. 模糊实体类型：entity type = 实体
+
 
 # 调参文档
 https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
-参数很重要
 
 #Qwen2-7B-instruct-awq
 1. 作品不能带书名号,F1 50->57
@@ -21,7 +27,6 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 	很有意思：即使只保留：default,区域，场所，词汇，饮食, 61.4 -> 61.0
 	delete 词汇demo 61->61.2
 	reback
-
 
 # UniNER-7B-all：26G  似乎应该用:UniNER-7B-definition  对于示意改写更兼容
 1. Llama + ChatGPT生成的数据 -> 英文友好，中文估计支持不行; 耗时从2min-》12min左右；还能run起来
@@ -45,31 +50,25 @@ https://c740uhpr2i.feishu.cn/sheets/B7CFs8ijih1c9xtqKLAcL6FdnVg?sheet=pasm3e
 1. 数据,以哪个作为基准呢?
 2. 仔细查看数据:shcema 似乎有不合理的地方,与input不配对,这种情况问题很大
 
-# 数据集
-## IEPile
+## 观察InstructIE
 NER,RE,EE类型; 尤其是RE,三元组对语义理解有一定帮助,但是又和比赛有一定差异性
 InstructIE: 是可以转换成本次比赛的格式的数据; 官方说有一定的噪音,那么就需要对数据进行提纯
+InstructIE 问题是：属性词缺乏描述信息，比较单吊，缺乏语义变化后的结果对比
 
-TODO
 1. 观察InstructIE ,产生微调数据集.调试了几轮，没有效果，反而下降
+## IEPile
+1. IEPile 数据微调也没有效果
 
+## 观点
+1. 相比于比赛数据，这些数据有一些差异，太简单了，难以有收益
+2. 准备了一些相仿数据，准备预测，然后人工校准，比赛不允许，放弃
+3. 微调
+	3.1 中文词典来微调： 比赛数据：很依赖entity, attribute的描述信息，比如：调味品，辅材，主材，烹饪方式等也与对应的description 有极大的关系，需要很多常识。
+中文词典可以用来增强：对entity的理解。
+	3.2 缺失entity type: 需要专门的一些数据集
 
-# 思考
-比赛数据：很依赖entity, attribute的描述信息，比如：调味品，辅材，主材，烹饪方式等也与对应的description 有极大的关系
-对应的InstructIE 问题是：属性词缺乏描述信息，比较单吊，缺乏语义变化后的结果对比
+一个问题： Prompt的微小改动，比如一个引号，对结果的影响不小，难找到解释原因？
 
-
-
-
-# CCKS复赛数据
-entities:131
-	'政治人物': 120,
-	'历史人物': 65,
-	'公司': 49,
-	'法律法规': 48,
-	'文化人物': 40,
-	'汽车': 41,
-	'运动员': 29,
-摸底头部entities主要问题
-1. 
-attributes:578
+# DeepseekV2 API
+F1:66 附近
+API有一个问题：非法内容异常
