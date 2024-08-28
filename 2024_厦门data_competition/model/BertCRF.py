@@ -1,5 +1,5 @@
 #coding:utf-8
-from torchcrf import CRF
+# from torchcrf import CRF
 from .MCRF import CRF
 import torch.nn as nn
 from transformers.models.bert.modeling_bert import BertPreTrainedModel, BertModel

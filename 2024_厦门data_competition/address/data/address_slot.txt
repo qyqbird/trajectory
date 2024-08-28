@@ -2,9 +2,12 @@ O	O
 B-road_name	道路名
 I-road_name	道路名
 E-road_name	道路名
+S-road_name	道路名
 B-road_num	道路号
 I-road_num	道路号
 E-road_num	道路号
+S-road_num	道路号
 B-house_num	房屋号
 I-house_num	房屋号
 E-house_num	房屋号
+S-house_num	房屋号
