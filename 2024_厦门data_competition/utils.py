@@ -122,37 +122,18 @@ def get_slot_label_name_map2(slot_path):
         slot2name[line[0]] = line[1]
     return slot2name
 
-def load_model2(args, model_dir, device, slot_label_lst):
-    if not os.path.exists(model_dir):
-        raise Exception("Model doesn't exists! Train first!")
-    try:
-        model = MODEL_CLASSES[args.model_type][1].from_pretrained(model_dir,
-                                                                  args=args,
-                                                                  slot_label_lst=slot_label_lst)
-        model.to(device)
-        model.eval()
-        logger.info("***** Model Loaded *****")
-    except:
-        raise Exception("Some model files might be missing...")
-    return model
 
-def load_model_context(pred_config, task):
-    pwd = os.path.dirname(os.path.abspath(__file__))
-    device = "cuda" if torch.cuda.is_available() and not pred_config.no_cuda else "cpu"
-    print(f"Load {task}\tno_cuda: {pred_config.no_cuda}\tdevice:{device}\tuse_crf:{pred_config.use_crf}")
-    if task == "aspect":
-        args_path = f"{pwd}/{task}/{pred_config.aspect_model_dir}/training_args.bin"
-        model_dir = f"{pwd}/{task}/{pred_config.aspect_model_dir}"
-        slot_path = f"{pwd}/{task}/data/{pred_config.aspect_slot_label_file}"
-    else:
-        args_path = f"{pwd}/{task}/{pred_config.fault_model_dir}/training_args.bin"
-        model_dir = f"{pwd}/{task}/{pred_config.fault_model_dir}"
-        slot_path = f"{pwd}/{task}/data/{pred_config.fault_slot_label_file}"
-
-    print(f"Loading {task} ... {args_path}\t{slot_path}\t{model_dir}")
-    args = torch.load(args_path)
-    slot_label_lst = [label.strip().split("\t")[0] for label in open(slot_path, 'r', encoding='utf-8')]
-    slot2name = get_slot_label_name_map2(slot_path)
-    model = load_model2(args, model_dir, device, slot_label_lst)
-    print(slot2name)
-    return args, slot_label_lst, slot2name, model, device
+def result_parser(result):
+    res = [''] * 3
+    for info in result:
+        label = info['label']
+        text = info['valid']
+        if label == "道路名":
+            res[0] = text
+        elif label == "道路号":
+            res[1] = text
+        elif label == "房屋号":
+            res[2] = text
+    address = ''.join(res)
+    print(address)
+    return address

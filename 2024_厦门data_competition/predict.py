@@ -5,8 +5,10 @@ import numpy as np
 import torch
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
 from utils import init_logger, load_private_tokenizer, get_slot_labels, get_slot_label_name_map, MODEL_CLASSES
-from utils import get_args,get_device,load_model,load_model_context
+from utils import get_args,get_device,load_model, result_parser
 import time
+import pandas as pd
+import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +26,12 @@ def csv_load(csv_file):
     lines = []
     ids = []
     for row in df.itertuples():
-        line = getattr(row, 'N_standard_address')
+        line = getattr(row, 'N_standard_address').replace('號', '号').replace('$', '号').replace('#', '号')
         idx = getattr(row, 'id')
         lines.append(line)
         ids.append(idx)
 
-    return idx, lines
+    return ids, lines
 
 
 
@@ -81,7 +83,7 @@ def predict(pred_config):
     # Convert input file to TensorDataset
     pad_token_label_id = args.ignore_index
 
-    ids, lines = csv_load('address/data/初赛测试集.csv')
+    ids, lines = csv_load('data/初赛测试集.csv')
     lines = tokenize_clean_align(tokenizer, lines)
     start_time = time.time() * 1000
     result = predict_lines(args, aspect_slot_label_lst, device, lines, model, pad_token_label_id, pred_config, slot2name, tokenizer)
@@ -89,10 +91,17 @@ def predict(pred_config):
     print(f"time per line: {per_time}")
 
     fout = open(pred_config.output_file, 'w')
-    for line, res in zip(lines, result):
+    csv_writer = []
+    for idx, line, res in zip(ids, lines, result):
         fout.write(f"{line.strip()}\t{res}\n")
+        addre = '福建省厦门市思明区' + result_parser(res)
+        csv_writer.append([idx, addre, line])
     fout.close()
-
+    
+    csv_writer = pd.DataFrame(data=csv_writer, columns=['id', 'address', 'input'])
+    csv_writer.to_csv(pred_config.output_file + "check.csv", sep=',', index=False)
+    csv_writer.drop('input', axis=1, inplace=True)
+    csv_writer.to_csv(pred_config.output_file + ".csv", sep=',', index=False)
 
 def predict_lines(args, aspect_slot_label_lst, device, lines, model, pad_token_label_id, pred_config, slot2name,
                   tokenizer):
@@ -134,7 +143,7 @@ def predict_lines(args, aspect_slot_label_lst, device, lines, model, pad_token_l
                                                   axis=0)
                     crf_time = round(1000 * (time.time() - crf_start), 3)
                     crf_total += crf_time
-                    print(f"crf_time:{crf_time}")
+                    # print(f"crf_time:{crf_time}")
                 else:
                     aspect_slot_preds = np.append(aspect_slot_preds, aspect_tagger_logit.detach().cpu().numpy(), axis=0)
 
@@ -201,21 +210,6 @@ def predict_lines(args, aspect_slot_label_lst, device, lines, model, pad_token_l
         ret.append(result)
     print(f"crf_total:{crf_total}")
     return ret
-
-class FaultAspectJoint(object):
-    def __init__(self, pred_config):
-        self.aspect_args, self.aspect_slot_label_lst, self.aspect_slot2name, self.aspect_model, self.device = load_model_context(pred_config, "aspect")
-        self.fault_args, self.fault_slot_label_lst, self.fault_slot2name, self.fault_model, self.device = load_model_context(pred_config, "fault")
-        self.tokenizer = load_private_tokenizer(pred_config)
-        self.pred_config = pred_config
-        self.pad_token_label_id = self.aspect_args.ignore_index
-
-    def tag_predicts(self, contents, task):
-        if task == "aspect":
-            result_list = predict_lines(self.aspect_args, self.aspect_slot_label_lst, self.device, contents, self.aspect_model, self.pad_token_label_id, self.pred_config, self.aspect_slot2name, self.tokenizer)
-        else:
-            result_list = predict_lines(self.fault_args, self.fault_slot_label_lst,  self.device, contents, self.fault_model, self.pad_token_label_id, self.pred_config,self.fault_slot2name,self.tokenizer)
-        return result_list
 
 if __name__ == "__main__":
     init_logger()
