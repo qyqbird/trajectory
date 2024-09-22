@@ -44,7 +44,7 @@ def parse_pdf(pdf_dir):
 	for i, filename in enumerate(os.listdir(pdf_dir), 1):
 		if filename.endswith('.pdf'):
 			pdf_path = os.path.join(pdf_dir, filename)
-			print(f"正在处理第{i}/{total_files}个文件: {filename}")
+			# print(f"正在处理第{i}/{total_files}个文件: {filename}")
 			try:
 				doc = pymupdf.open(pdf_path)
 				for page in doc:
@@ -54,7 +54,8 @@ def parse_pdf(pdf_dir):
 			except Exception as e:
 				print(f"处理文件 {filename} 时出错: {str(e)}")
 	print("PDF解析完成")
-	return texts
+	# return texts	# 返回后接下来报错
+	return ' '.join(texts).replace(remove_text, '')	# 这个不报错
 
 
 def pdfplumer_parser_pdf(pdf_dir):
