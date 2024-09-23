@@ -31,8 +31,7 @@ if __name__ == '__main__':
 		print(f"vector chunk count:{len(docs)} time cousume:{vector_time}s")
 
 	vectordb = Chroma(persist_directory=persis_dir, embedding_function=embedding_tool)
-	# retriever = vectordb.as_retriever(search_kwargs={"k": 1, "score_threshold":0.3})	# 调参还比较多
-	retriever = vectordb.as_retriever(search_type="similarity_score_threshold", search_kwargs={"k": 1, "score_threshold":0.3})
+	retriever = vectordb.as_retriever(search_kwargs={"k": 1})	# 调参还比较多
 
 	questions = pd.read_csv('data/A_question.csv')
 	answer = []
@@ -40,16 +39,13 @@ if __name__ == '__main__':
 	for row in questions.itertuples():
 		ques_id = getattr(row, 'ques_id')
 		question = getattr(row, 'question')
-		# result = retriever.invoke(question)
+		print(question)
 		result = retriever.invoke(question)
-		if len(result) > 0:
-			answer.append(result[0].page_content)
-			embeddings.append(embedding_tool.embed_query(result[0].page_content))
-			print(f"{ques_id}\t{question}\n{result[0].page_content}")
-		else:
-			answer.append("")
-			embeddings.append("")
-			print(f"{ques_id}\t{question}\n无阈值内答案")
+		recall_top1 = result[0].page_content.replace("\n", "")
+		answer.append(recall_top1)
+		embeddings.append(embedding_tool.embed_query(recall_top1))
+		print(f"{ques_id}\t{question}\n{result[0].page_content}")
+
 	questions['answer'] = answer
 	questions.to_csv("data/no_embedding_submit.csv", index=False)
 	questions['embedding'] = embeddings

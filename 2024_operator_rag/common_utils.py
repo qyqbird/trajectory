@@ -46,7 +46,7 @@ def timeit(func):
 
 @timeit
 def get_embedding_tool():
-    model_name = "bge-large-zh-v1.5"
+    model_name = "./bge-large-zh-v1.5"  # 指定好路径，否则以为去网上下载
     model_kwargs = {'device': 'cpu'}
     if torch.cuda.is_available():
         model_kwargs = {'device': 'cuda'}
