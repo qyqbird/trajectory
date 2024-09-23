@@ -23,7 +23,6 @@ if __name__ == '__main__':
 		# contents = pdfplumer_parser_pdf('data/A_document')
 		# text_splitter = RecursiveCharacterTextSplitter(chunk_size=128, chunk_overlap=18, separators=['。', '！'], keep_separator='end')
 		# text_splitter = TokenTextSplitter(chunk_size=128, chunk_overlap=18, separators=['。', '！'], keep_separator='end')
-		# chunks = cut_sentence_with_quotation_marks(contents)
 
 		vector_start_time = time.time()
 		vectordb = Chroma.from_documents(docs, embedding_tool, persist_directory=persis_dir)
@@ -47,6 +46,6 @@ if __name__ == '__main__':
 		print(f"{ques_id}\t{question}\n{result[0].page_content}")
 
 	questions['answer'] = answer
-	questions.to_csv("data/no_embedding_submit.csv", index=False)
+	questions.to_csv("data/no_embedding_submit.csv", index=False, sep="\n")
 	questions['embedding'] = embeddings
 	questions.to_csv("data/submit.csv", index=False)

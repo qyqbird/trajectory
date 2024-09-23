@@ -53,30 +53,30 @@ def pdf_parser(text_splitter):
 	return chunks
 
 
-
-def parse_pdf(pdf_dir):
+# 解析很快 3s
+@timeit
+def parse_pdf(pdf_dir, text_splitter):
 	import pymupdf
-	remove_text = '本文档为2024 CCF BDCI 比赛用语料的一部分。部分文档使用大语言模型改写生成，内容可能与现实情况不符，可能不具备现实意义，仅允许在本次比赛中使用。'
 	texts = []
 	total_files = len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
 	print(f"开始解析PDF文件，共{total_files}个文件")
 	for i, filename in enumerate(os.listdir(pdf_dir), 1):
-		if filename.endswith('.pdf'):
+		if filename.endswith('AZ01.pdf'):
 			pdf_path = os.path.join(pdf_dir, filename)
-			# print(f"正在处理第{i}/{total_files}个文件: {filename}")
+			print(f"正在处理第{i}/{total_files}个文件: {filename}")
 			try:
 				doc = pymupdf.open(pdf_path)
 				content = ""
 				for page in doc:
 					content += page.get_text()
+					print(content)
 				doc.close()
-				content = content.replace("\n", "").replace(remove_text, "")
+				content = content.replace("\n", "")
 				texts.append(content)
 			except Exception as e:
 				print(f"处理文件 {filename} 时出错: {str(e)}")
 	print("PDF解析完成")
-	# return texts	# 返回后接下来报错
-	return ' '.join(texts)
+	return texts
 
 def pdfplumer_parser_pdf(pdf_dir):
 	import pdfplumber
@@ -98,9 +98,17 @@ def pdfplumer_parser_pdf(pdf_dir):
 	return ' '.join(texts)
 
 
-
+@timeit
+def table_parser():
+	import fitz
+	doc = fitz.open('data/A_document/AY01.pdf')
+	page = doc[4] # 下标从0开始,第五页对应4
+	tables = page.find_tables()
+	df = tables[0].to_pandas()
+	df.to_csv("data/table.csv")
+	df.to_excel('data/table.xlsx', index=False)
 
 if __name__ == '__main__':
 	# text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
-	text_splitter = RecursiveCharacterTextSplitter(chunk_size=128, chunk_overlap=18, separators=['。', '！'], keep_separator='end')
-	pdf_parser(text_splitter)
+	# parse_pdf('data/A_document', text_splitter)
+	table_parser()
