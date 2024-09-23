@@ -50,6 +50,7 @@ def get_embedding_tool():
     model_kwargs = {'device': 'cpu'}
     if torch.cuda.is_available():
         model_kwargs = {'device': 'cuda'}
+    print(f"env:{model_kwargs['device']}")
     encode_kwargs = {'normalize_embeddings': True}
     from langchain_community.embeddings import HuggingFaceBgeEmbeddings
     embedding = HuggingFaceBgeEmbeddings(
