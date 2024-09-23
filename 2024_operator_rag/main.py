@@ -42,9 +42,14 @@ if __name__ == '__main__':
 		question = getattr(row, 'question')
 		# result = retriever.invoke(question)
 		result = retriever.invoke(question)
-		answer.append(result[0].page_content)
-		embeddings.append(embedding_tool.embed_query(result[0].page_content))
-		print(f"{ques_id}\t{question}\n{result[0].page_content}")
+		if len(result) > 0:
+			answer.append(result[0].page_content)
+			embeddings.append(embedding_tool.embed_query(result[0].page_content))
+			print(f"{ques_id}\t{question}\n{result[0].page_content}")
+		else:
+			answer.append("")
+			embeddings.append("")
+			print(f"{ques_id}\t{question}\n无阈值内答案")
 	questions['answer'] = answer
 	questions.to_csv("data/no_embedding_submit.csv", index=False)
 	questions['embedding'] = embeddings
