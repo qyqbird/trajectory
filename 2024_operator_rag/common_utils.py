@@ -1,130 +1,63 @@
-from langchain_community.document_loaders import PyPDFLoader, PyPDFium2Loader, PyMuPDFLoader
-import os
-from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-from langchain_community.vectorstores import Chroma
+#coding:utf-8
+import re
 import time
 
-#1. PyPDFLoader
-def load_data():
-	start_time = time.time()
-	pdf_container = []
-	for filename in os.listdir('data/A_document'):
-		if filename.startswith('AT') or filename.startswith('AF') or filename.startswith('AW'):
-			loader = PyMuPDFLoader(f'data/A_document/{filename}')
-			result = loader.load()
-			content = ""
-			for page in result:	# page Document
-				page_content = page.page_content.encode('utf-8', 'ignore').decode('utf-8').replace("\n", "")
-				content += page_content
-			content = content.replace("本文档为2024CCFBDCI比赛用语料的一部分。部分文档使用大语言模型改写生成，内容可能与现实情况不符，可能不具备现实意义，仅允许在本次比赛中使用。", "")
-			if len(content) > 0:
-				pdf_container.append(content)
-		else:
-			# 年报中涉及到表格展示是有问题的  AY AZ
-			loader = PyMuPDFLoader(f'data/A_document/{filename}')
-			result = loader.load()
-			content = ""
-			for page in result:
-				page_content = page.page_content.encode('utf-8', 'ignore').decode('utf-8').replace("\n", "")
-				content += page_content
-			content = content.replace("本文档为2024CCFBDCI比赛用语料的一部分。部分文档使用大语言模型改写生成，内容可能与现实情况不符，可能不具备现实意义，仅允许在本次比赛中使用。", "")
-			if len(content) > 0:
-					pdf_container.append(content)
+# 引用：https://github.com/GLZ1925/-
+text = "“喂！路明非！你给我站住！”叔叔追了出来，在走廊尽头冲他低吼。路明非实在没时间让他兴师问罪了，只好说：“叔叔我真有事得先走，什么事以后再说！”叔叔可不听他说，跑过来一把抓住他的手：“你小子给我说老实话？是不是在外面惹事了？我看外面都是警车还有流氓，他们都是冲你来的？”“没……没有……”路明非想辩解。“你小子真不是骗我们说上学其实跑日本来混黑道了吧？”叔叔瞪着他。“真不是，这事儿一时没法解释……”叔叔从屁股后面摸出金利来的钱包，打开来夹层里有几张日圆钞票，大概一万多的样子。他把那张万圆大钞塞进路明非手里：“叔叔不知道你惹了什么麻烦，你们年轻人见的世面大，有些事不愿告诉我们大人，我问也没用。我以前也惹过事跑过路，跑路身上千万得有现金！银行卡信用卡跑车都没用！”"
+def normal_cut_sentence(text):
+    text = re.sub('([。！？\?])([^’”])',r'\1\n\2',text)#普通断句符号且后面没有引号
+    text = re.sub('(\.{6})([^’”])',r'\1\n\2',text)#英文省略号且后面没有引号
+    text = re.sub('(\…{2})([^’”])',r'\1\n\2',text)#中文省略号且后面没有引号
+    text = re.sub('([.。！？\?\.{6}\…{2}][’”])([^’”])',r'\1\n\2',text)#断句号+引号且后面没有引号
+    return text.split("\n")
 
-	consume = time.time() - start_time
-	print(f"read PDF count:{len(pdf_container)} cousume time:{consume}")
-	return pdf_container
+def cut_sentence_with_quotation_marks(text):
+    p = re.compile("“.*?”")
+    list = []
+    index = 0
+    length = len(text)
+    for i in p.finditer(text):
+        temp = ''
+        start = i.start()
+        end = i.end()
+        for j in range(index, start):
+            temp += text[j]
+        if temp != '':
+            temp_list = normal_cut_sentence(temp)
+            list += temp_list
+        temp = ''
+        for k in range(start, end):
+            temp += text[k]
+        if temp != ' ':
+            list.append(temp)
+        index = end
+    return list
 
-remove_text = '本文档为2024CCFBDCI比赛用语料的一部分。部分文档使用大语言模型改写生成，内容可能与现实情况\n不符，可能不具备现实意义，仅允许在本次比赛中使用。\n'
-def parse_pdf(pdf_dir):
-	import pymupdf
-	texts = []
-	total_files = len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
-	print(f"开始解析PDF文件，共{total_files}个文件")
-	for i, filename in enumerate(os.listdir(pdf_dir), 1):
-		if filename.endswith('.pdf'):
-			pdf_path = os.path.join(pdf_dir, filename)
-			# print(f"正在处理第{i}/{total_files}个文件: {filename}")
-			try:
-				doc = pymupdf.open(pdf_path)
-				for page in doc:
-					text = page.get_text().replace('\n', '')
-					texts.append(text)
-				doc.close()
-			except Exception as e:
-				print(f"处理文件 {filename} 时出错: {str(e)}")
-	print("PDF解析完成")
-	# return texts	# 返回后接下来报错
-	return ' '.join(texts).replace(remove_text, '')	# 这个不报错
+def timeit(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
 
+        print(f"{func.__name__} finished in {end_time - start_time:.6f} seconds.")
+        return result
+    return wrapper
 
-def pdfplumer_parser_pdf(pdf_dir):
-	import pdfplumber
-	texts = []
-	total_files = len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
-	print(f"开始解析PDF文件，共{total_files}个文件")
-	for i, filename in enumerate(os.listdir(pdf_dir), 1):
-		if filename.endswith('.pdf'):
-			pdf_path = os.path.join(pdf_dir, filename)
-			print(f"正在处理第{i}/{total_files}个文件: {filename}")
-
-			with pdfplumber.open(pdf_path) as pdf:
-				content = ""
-				for page in pdf.pages:
-					content += page.extract_text() or ""
-				content = content.replace(remove_text, "")
-				texts.append(content)
-	return texts
+@timeit
+def get_embedding_tool():
+    model_name = "bge-large-zh-v1.5"
+    model_kwargs = {'device': 'cuda'}
+    encode_kwargs = {'normalize_embeddings': True}
+    from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+    embedding = HuggingFaceBgeEmbeddings(
+        model_name=model_name,
+        model_kwargs=model_kwargs,
+        encode_kwargs=encode_kwargs,
+        query_instruction="为文本生成向量表示用于文本检索"
+    )
+    return embedding
 
 
-
+# 按照知识点来切割
 if __name__ == '__main__':
-	parse_pdf('data/A_document')
-	# load_data()
-	# load_inferencefile()
-	# loader = PyPDFLoader(f'data/A_document/AZ06.pdf')
-	# result = loader.load()
-	#
-	# content = ""
-	# for page in result:
-	# 	page_content = page.page_content.encode('utf-8', 'ignore').decode('utf-8')
-	# 	content += page.page_content.replace("\n", "")
-	# content = content.replace("本文档为2024CCFBDCI比赛用语料的一部分。部分文档使用大语言模型改写生成，内容可能与现实情况不符，可能不具备现实意义，仅允许在本次比赛中使用。", "")
-	#
-	# from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
-	# # text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。|！', is_separator_regex=True, keep_separator='end')
-	# text_splitter = RecursiveCharacterTextSplitter(chunk_size=128, chunk_overlap=18, separators=['。', '！'], keep_separator='end')
-	# chunks = text_splitter.split_text(content)
-
-	# model_name = "bge-large-zh-v1.5"
-	# model_kwargs = {'device': 'cpu'}
-	# encode_kwargs = {'normalize_embeddings': True}
-	# embedding = HuggingFaceBgeEmbeddings(
-	# 	model_name=model_name,
-	# 	model_kwargs=model_kwargs,
-	# 	encode_kwargs=encode_kwargs,
-	# 	query_instruction="为文本生成向量表示用于文本检索"
-	# )
-	# persis_dir = "data/database"
-	# if not os.path.exists(persis_dir):
-	# 	vectordb = Chroma.from_texts(chunks, embedding, persist_directory=persis_dir)
-	# 	vectordb.persist()
-	# else:
-	# 	vectordb = Chroma(persist_directory=persis_dir, embedding_function=embedding)
-	#
-	# questions = load_inferencefile()
-	# retriever = vectordb.as_retriever(search_kwargs={"k": 2})
-	#
-	# answer = []
-	# embeddings = []
-	# for row in questions.itertuples():
-	# 	ques_id = getattr(row, 'ques_id')
-	# 	question = getattr(row, 'question')
-	# 	# result = retriever.invoke(question)
-	# 	result = retriever.get_relevant_documents(question)
-	# 	answer.append(result[0].page_content)
-	# 	embeddings.append(embedding.embed_documents(result[0].page_content))
-	# 	print(f"{ques_id}\t{question}\n{result[0].page_content}")
-	# questions['answer'] = answer
-	# questions['embedding'] = embeddings
-	# questions.to_csv("data/demo.csv")
+    print(cut_sentence_with_quotation_marks(text))
