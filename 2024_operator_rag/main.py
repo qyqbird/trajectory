@@ -1,6 +1,6 @@
 from data_utils import load_data, parse_pdf, pdfplumer_parser_pdf, pdf_parser
 from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter,TokenTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 import os
 import pickle
 import pandas as pd
@@ -16,29 +16,19 @@ if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		read_pdf_flag = sys.argv[1]
 	embedding_tool = get_embedding_tool()	# 加载很耗时
-
+	text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
 	if read_pdf_flag == "1":
 		# contents = parse_pdf('data/A_document')
-		contents = pdf_parser()
+		docs = pdf_parser(text_splitter)
 		# contents = pdfplumer_parser_pdf('data/A_document')
-		split_start_time = time.time()
-		text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
 		# text_splitter = RecursiveCharacterTextSplitter(chunk_size=128, chunk_overlap=18, separators=['。', '！'], keep_separator='end')
 		# text_splitter = TokenTextSplitter(chunk_size=128, chunk_overlap=18, separators=['。', '！'], keep_separator='end')
-		chunks = text_splitter.split_text(contents)
 		# chunks = cut_sentence_with_quotation_marks(contents)
-		split_time = time.time() - split_start_time
-		print(f"split content size:{len(contents)}\t time:{split_time} ")
-
-		print(len(chunks))
-		for idx, chunk in enumerate(chunks):
-			print(f"{idx}\n{len(chunk)}\t{chunk}")
 
 		vector_start_time = time.time()
-		vectordb = Chroma.from_texts(chunks, embedding_tool, persist_directory=persis_dir)
-		vectordb.persist()
+		vectordb = Chroma.from_documents(docs, embedding_tool, persist_directory=persis_dir)
 		vector_time = time.time() - vector_start_time
-		print(f"vector chunk count:{len(chunks)} time cousume:{vector_time}s")
+		print(f"vector chunk count:{len(docs)} time cousume:{vector_time}s")
 
 	vectordb = Chroma(persist_directory=persis_dir, embedding_function=embedding_tool)
 	# retriever = vectordb.as_retriever(search_kwargs={"k": 1, "score_threshold":0.3})	# 调参还比较多

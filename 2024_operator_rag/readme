@@ -1,1 +1,18 @@
-需要智能切片,召回后合并切片
+基于运营商文本数据的知识库检索: https://www.datafountain.cn/competitions/1045/datasets
+# 文档解析
+## PyPDFLoader
+少量PDF遇到打印异常 print page_content 
+UnicodeEncodeError: 'utf-8' codec can't encode characters in position 105-112: surrogates not allowed
+PyPDFLoader 其中提取images 不知道如何实现
+
+
+## PyMuPDFLoader
+
+## pymupdf
+
+
+# 知识库生成
+
+# 文本召回
+
+

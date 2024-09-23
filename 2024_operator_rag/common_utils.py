@@ -46,7 +46,7 @@ def timeit(func):
 @timeit
 def get_embedding_tool():
     model_name = "bge-large-zh-v1.5"
-    model_kwargs = {'device': 'cuda'}
+    model_kwargs = {'device': 'cpu'}
     encode_kwargs = {'normalize_embeddings': True}
     from langchain_community.embeddings import HuggingFaceBgeEmbeddings
     embedding = HuggingFaceBgeEmbeddings(
