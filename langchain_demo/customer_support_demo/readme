@@ -1,0 +1,10 @@
+data: 私有知识库
+LLM + RAG 客服
+
+
+# 启动脚本
+## 网页端访问
+python web.py
+
+## 命令行访问
+python customer_support.py
