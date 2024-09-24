@@ -1,7 +1,7 @@
 import pandas as pd
 
 def get_desciption():
-	sheet = pd.read_excel('data/客服知识库.xlsx', sheet_name='狗狗介绍')
+	sheet = pd.read_excel('data/客服知识库.xlsx', sheet_name='狗狗介绍', engine='openpyxl')
 	descriptions = []
 	for row in sheet.itertuples():
 		desc = "狗名字：" + getattr(row, "名字")
@@ -132,7 +132,8 @@ def get_customer_data():
 	return texts
 
 if __name__ == '__main__':
-	get_customer_data()
+	get_desciption()
+	# get_customer_data()
 
 
 

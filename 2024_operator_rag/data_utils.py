@@ -1,9 +1,9 @@
-from langchain_community.document_loaders import PyPDFLoader, PyPDFium2Loader, PyMuPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, PyPDFium2Loader, PyMuPDFLoader, PDFPlumberLoader, UnstructuredPDFLoader
 import os
 import time
 from common_utils import timeit
 from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter,TokenTextSplitter
-
+import pandas as pd
 
 #1. PyPDFLoader
 def load_data():
@@ -102,13 +102,31 @@ def pdfplumer_parser_pdf(pdf_dir):
 def table_parser():
 	import fitz
 	doc = fitz.open('data/A_document/AY01.pdf')
-	page = doc[4] # 下标从0开始,第五页对应4
-	tables = page.find_tables()
-	df = tables[0].to_pandas()
-	df.to_csv("data/table.csv")
-	df.to_excel('data/table.xlsx', index=False)
+	for page in doc:
+		if page.find_tables():
+			tables = page.find_tables()
+			for table in tables:
+				df = table.to_pandas()
+				print(df)
+				df.to_csv("data/table.csv")
+				df.to_excel('data/table.xlsx', index=False)
 
+
+@timeit
+def table_parser2(text_splitter):
+	#https://github.com/ARTAvrilLavigne/ExtractFinancialStatement?tab=readme-ov-file
+	import tabula
+	tables = tabula.read_pdf('data/A_document/AY01.pdf', pages='all')	# 返回DataFrame
+	for table in tables:
+		print(table.columns)
+	# tabula.convert_into("data/A_document/AY01.pdf", "data/A_CSV/output.csv", output_format="csv", pages='all')
+
+
+''' TODO
+1. 财报：页眉页脚删除
+2. 表格如何切割
+'''
 if __name__ == '__main__':
-	# text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
+	text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
 	# parse_pdf('data/A_document', text_splitter)
-	table_parser()
+	# table_parser2(text_splitter)
