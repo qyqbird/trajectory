@@ -53,62 +53,68 @@ def pdf_parser(text_splitter):
 	return chunks
 
 
-# 解析很快 3s
+# 解析很快 3s  以text 返回的应该要差一些
 @timeit
 def parse_pdf(pdf_dir, text_splitter):
 	import pymupdf
-	texts = []
+	chunks = []
 	total_files = len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
 	print(f"开始解析PDF文件，共{total_files}个文件")
 	for i, filename in enumerate(os.listdir(pdf_dir), 1):
-		if filename.endswith('AZ01.pdf'):
+		if filename.endswith('AY01.pdf'):
 			pdf_path = os.path.join(pdf_dir, filename)
 			print(f"正在处理第{i}/{total_files}个文件: {filename}")
 			try:
-				doc = pymupdf.open(pdf_path)
+				docs = pymupdf.open(pdf_path)
 				content = ""
-				for page in doc:
-					content += page.get_text()
-					print(content)
-				doc.close()
-				content = content.replace("\n", "")
-				texts.append(content)
+				for doc in docs:
+					content += doc.get_text() + "\n"
+				docs.close()
+				chunk = text_splitter.split_text(content)
+				chunks.extend(chunk)
+				print(f"{idx}\t{filename}\tpage:{len(docs)}\tchunks:{len(chunk)}")
 			except Exception as e:
 				print(f"处理文件 {filename} 时出错: {str(e)}")
-	print("PDF解析完成")
-	return texts
 
-def pdfplumer_parser_pdf(pdf_dir):
+	for idx, chunk in enumerate(chunks):
+		print(f"{idx}\n{chunk}")
+	return chunks
+
+@timeit
+def pdfplumer_parser_pdf(pdf_dir, text_splitter):
 	import pdfplumber
 	remove_text = '本文档为2024CCFBDCI比赛用语料的一部分。部分文档使用大语言模型改写生成，内容可能与现实情况\n不符，可能不具备现实意义，仅允许在本次比赛中使用。\n'
 	texts = []
 	total_files = len([f for f in os.listdir(pdf_dir) if f.endswith('.pdf')])
 	print(f"开始解析PDF文件，共{total_files}个文件")
 	for i, filename in enumerate(os.listdir(pdf_dir), 1):
-		if filename.endswith('.pdf'):
+		if filename.endswith('AY01.pdf'):
 			pdf_path = os.path.join(pdf_dir, filename)
 			print(f"正在处理第{i}/{total_files}个文件: {filename}")
-
 			with pdfplumber.open(pdf_path) as pdf:
 				content = ""
 				for page in pdf.pages:
-					content += page.extract_text() or ""
-				content = content.replace(remove_text, "").replace("\n", "")
+					content += page.extract_text()
+				content = content.replace(remove_text, "")
 				texts.append(content)
-	return ' '.join(texts)
+	
+	return texts
 
 
 @timeit
 def table_parser():
 	import fitz
 	doc = fitz.open('data/A_document/AY01.pdf')
-	page = doc[4] # 下标从0开始,第五页对应4
-	tables = page.find_tables()
-	df = tables[0].to_pandas()
-	df.to_csv("data/table.csv")
-	df.to_excel('data/table.xlsx', index=False)
+	for page in doc:
+		page = doc[4] # 下标从0开始,第五页对应4
+		tables = page.find_tables()
+		df = tables[0].to_pandas()
+		df.to_csv("data/table.csv")
+		df.to_excel('data/table.xlsx', index=False)
+
+
 
 if __name__ == '__main__':
-	# text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
-	# parse_pdf('data/A_document', text_splitter)
-	table_parser()
+	text_splitter = CharacterTextSplitter(chunk_size=128, chunk_overlap=18, separator='。', is_separator_regex=False, keep_separator='end')
+	parse_pdf('data/A_document', text_splitter)
+	# table_parser()
