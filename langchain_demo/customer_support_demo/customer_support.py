@@ -28,8 +28,8 @@ class ChatDoc():
 		return docs
 
 	def embedding_vector(self):
-		from langchain.vectorstores import Chroma
-		from langchain.embeddings import HuggingFaceBgeEmbeddings
+		from langchain_community.vectorstores import Chroma
+		from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 		persis_dir = "data/database"
 		model_kwargs = {'device': 'cpu'}
 		encode_kwargs = {'normalize_embeddings': True}
@@ -80,6 +80,8 @@ class ChatDoc():
 
 		# messages = self.prompt.from_messages(context=_context, question=question)
 		prompt = get_prompt(_context, question)
+
+		print(prompt)
 		result = self.interface(prompt)
 		# print(result['answer'])
 		return result

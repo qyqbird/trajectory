@@ -62,6 +62,7 @@ def get_embedding_tool():
     return embedding
 
 
+
 # 按照知识点来切割
 if __name__ == '__main__':
-    print(cut_sentence_with_quotation_marks(text))
+    get_header()
