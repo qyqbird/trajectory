@@ -14,6 +14,7 @@ class ChatDoc():
 						 ("ai", "您好！"),
 						 ("human","{question}")]
 		self.prompt = ChatPromptTemplate.from_messages(self.template)
+
 	def getFile(self):
 		doc = self.doc
 		loader = {"docx": Docx2txtLoader,
@@ -48,6 +49,10 @@ class ChatDoc():
 	def ask_and_rag2(self, question):
 		from langchain.retrievers import MultiQueryRetriever
 		from langchain.chat_models import ChatOpenAI
+		import logging
+		logging.basicConfig()
+		logging.getLogger('langchain.retrievers.multi_query').setLevel(logging.INFO)
+		 
 		db = self.embedding_vector()
 		llm = ChatOpenAI()
 		retriever_from_llm = MultiQueryRetriever.from_llm(retriever=db.as_retriever, llm=llm)
@@ -84,4 +89,7 @@ class ChatDoc():
 		chat = ChatOpenAI(model="", temperature=0)
 		return chat.invoke(messages)
 
+
 ChatDoc.getFile()
+chatdoc = ChatDoc()
+chatdoc.chat_with_doc('')

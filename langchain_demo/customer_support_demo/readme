@@ -8,3 +8,26 @@ python web.py
 
 ## 命令行访问
 python customer_support.py
+
+
+
+# 召回排序
+## 召回手段
+https://www.bilibili.com/video/BV1bA4m1573e/?p=8&spm_id_from=pageDriver
+1. 多查询
+2. 上下文压缩器/过滤器
+3. 集成检索器（多种检索手段，BM25,Embeeding）
+4. 上下文重排序
+    10份+检索文档的场景时，信息量过载，大模型无法有效利用，反而效果下降
+5. 父文档检索
+
+    在检索过程中，首先获取小块，然后查找这些块的父ID，并返回那些较大的文档
+
+## 问题
+排序问题：TopK 漏召回
+1. 增加元数据，比如信息块的文件名
+2. 尝试不同的Embedding 模型
+
+
+# RAG系统评估
+安装rags 

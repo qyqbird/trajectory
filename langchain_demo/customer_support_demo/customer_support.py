@@ -2,7 +2,7 @@ import os.path
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import ChatPromptTemplate
 from data_parser import get_customer_data
-from model import Kimi
+from model import DeepSeek 
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from PromptUtils import get_prompt
@@ -18,7 +18,7 @@ class ChatDoc():
 		# 				 ("human","{question}")]
 		# self.prompt = ChatPromptTemplate.from_messages(self.template)
 		self.retriever = self.embedding_vector().as_retriever()
-		self.llm = Kimi()
+		self.llm = DeepSeek()
 		self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 		self.interface = ConversationalRetrievalChain.from_llm(self.llm, self.retriever, memory=self.memory)
 
@@ -53,17 +53,33 @@ class ChatDoc():
 	# 使用多重查询，多角度,提高文档检索的精度
 	def ask_and_rag2(self, question):
 		from langchain.retrievers import MultiQueryRetriever
+		import logging
+		logging.basicConfig()
+		logging.getLogger('langchain.retrievers.multi_query').setLevel(logging.INFO)
+
 		retriever_from_llm = MultiQueryRetriever.from_llm(retriever=self.retriever, llm=self.llm)
 		results = retriever_from_llm.invoke(question)
 		return results
 
-	# 使用上下文压缩，提升提高文档精度
+	# 使用上下文压缩，不要立即返回文档，而是可以使用给定的查询的上下文对其压缩。既包含单文档压缩，也有整体的过滤
+	# 也是利用大模型过滤
 	def ask_and_rag3(self, question):
 		from langchain.retrievers import ContextualCompressionRetriever
-		from langchain.retrievers.document_compressors import LLMChainExtractor
+		from langchain.retrievers.document_compressors import LLMChainExtractor, LLMChainFilter, EmbeddingsFilter
+
 		compresser = LLMChainExtractor.from_llm(self.llm)
+		# fil = LLMChainFilter.from_llm(self.llm)	# 和上面的区别是，prompt template 不一样
 		compresser_retriever = ContextualCompressionRetriever(retriever=self.retriever, compresser=compresser)
 		return compresser_retriever.get_relevant_documents(question=question)
+
+	def ask_and_rag_reorder(self, question):
+		from langchain_community.document_transformers import LongContextReorder
+		reordering = LongContextReorder()
+		reordering.transform_documents(xx)
+
+	def rag_parent_retriver(self, question):
+		from langchain.retrievers import ParentDocumentRetriever
+		ParentDocumentRetriever()
 
 	# 在向量存储里使用大量边际相似性MMR和相似性打分
 	def ask_and_rag4(self, question):

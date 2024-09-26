@@ -24,7 +24,7 @@ def load_data():
 		with open(graph_path+".txt", 'w') as writer:
 			writer.write(content)
 
-		# 表格
+		# 表格 pip install tabula-py
 		import tabula
 		tables = tabula.read_pdf(f'data/A_document/{filename}', pages='all')	# 返回DataFrame
 		for idx, table in enumerate(tables):
